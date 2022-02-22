@@ -109,7 +109,7 @@ const transferToTeam = async (req, res) => {
       playerId
     );
     if (player.error) {
-      res.status(422).json({ status: "failed", error: player.error });
+      res.status(422).json({ status: "failed", message: player.error });
     } else {
       res.json({ status: "success", data: toPlayer(player) });
     }

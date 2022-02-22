@@ -1,3 +1,7 @@
+import withLocale from "../config/moment-locale";
+
+const moment = withLocale("en");
+
 const toError = (e, errCode, message) => {
   let error = {
     status: "failed",
@@ -35,6 +39,7 @@ const toPlayer = (player) => {
     weight,
     power,
     speed,
+    location,
     favourite_positions,
     created_at,
     updated_at,
@@ -57,10 +62,13 @@ const toPlayer = (player) => {
     weight,
     power,
     speed,
-    location: null,
+    location,
     favouritePositions: favourite_positions,
   };
-  _player.audit = { createdAt: created_at, updatedAt: updated_at };
+  _player.audit = {
+    createdAt: moment(created_at).format("ll"),
+    updatedAt: moment(updated_at).format("ll"),
+  };
   return _player;
 };
 
@@ -73,7 +81,10 @@ const toTeam = (team) => {
   _team.teamId = team_id;
   _team.name = name;
   _team.maxPlayers = max_players;
-  _team.audit = { createdAt: created_at, updatedAt: updated_at };
+  _team.audit = {
+    createdAt: moment(created_at).format("ll"),
+    updatedAt: moment(updated_at).format("ll"),
+  };
   return _team;
 };
 

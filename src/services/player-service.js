@@ -32,6 +32,10 @@ class PlayerService {
       fields["speed"] = player.speed;
     }
 
+    if (player.location) {
+      fields["location"] = player.location;
+    }
+
     if (player["favouritePositions"]) {
       fields["favourite_positions"] = player["favouritePositions"];
     }
@@ -50,6 +54,7 @@ class PlayerService {
                           p.weight,
                           p.power,
                           p.speed,
+                          p.location,
                           p.favourite_positions,
                           p.created_at,
                           p.updated_at
@@ -81,6 +86,7 @@ class PlayerService {
                             p.weight,
                             p.power,
                             p.speed,
+                            p.location,
                             p.favourite_positions,
                             p.created_at,
                             p.updated_at
@@ -106,6 +112,7 @@ class PlayerService {
                             p.weight,
                             p.power,
                             p.speed,
+                            p.location,
                             p.favourite_positions,
                             p.created_at,
                             p.updated_at
@@ -132,6 +139,7 @@ class PlayerService {
                             p.weight,
                             p.power,
                             p.speed,
+                            p.location,
                             p.favourite_positions,
                             p.created_at,
                             p.updated_at
@@ -157,12 +165,13 @@ class PlayerService {
                             p.weight,
                             p.power,
                             p.speed,
+                            p.location,
                             p.favourite_positions,
                             p.created_at,
                             p.updated_at
                      FROM players p
                               JOIN teams t ON t.team_id = p.team_id
-                     where t.team_id = $1`;
+                     where p.team_id = $1`;
       const res = await volleyBallDb.query(query, [teamId]);
       return multipleRowsExtractor.extract(res);
     } catch (e) {

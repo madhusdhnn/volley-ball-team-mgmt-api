@@ -22,7 +22,7 @@ class AuthenticationService {
       return {
         status: "failure",
         code: "ROLE_ERR_404",
-        error: `Role with id ${roleId} does not exists`,
+        message: `Role with id ${roleId} does not exists`,
       };
     }
     const hashed = this.passwordEncoder.encode(password);
@@ -58,7 +58,7 @@ class AuthenticationService {
       return {
         status: "failed",
         code: "AUTH_401",
-        error: "Username and password does not match",
+        message: "Username and password does not match",
       };
     }
 
@@ -66,12 +66,12 @@ class AuthenticationService {
       return {
         status: "failed",
         code: "AUTH_401",
-        error: "Password is wrong",
+        message: "Password is wrong",
       };
     }
 
     if (!user.enabled) {
-      return { status: "failed", code: "AUTH_403", error: "User disabled" };
+      return { status: "failed", code: "AUTH_403", message: "User disabled" };
     }
 
     const {
@@ -191,7 +191,7 @@ class AuthenticationService {
       issuer: process.env.ISSUER,
     };
 
-    let token = jwt.sign({ user: { ...userTokenData } }, secretKey);
+    let token = jwt.sign({ user: { ...userTokenData } }, secretKey, jwtOptions);
 
     await volleyBallDb.query(
       `UPDATE user_tokens SET token = $1, secret_key = $2 WHERE refresh_token = $3`,

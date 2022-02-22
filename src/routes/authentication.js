@@ -17,7 +17,17 @@ const signin = async (req, res) => {
         res.status(403).json(authentication);
       }
     } else {
-      res.status(200).json(authentication);
+      const { refreshToken, ...other } = authentication.data;
+      res
+        .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
+          expiresIn: new Date(
+            Date.now() + process.env.REFRESH_TOKEN_COOKIE_EXPIRY
+          ),
+          secure: process.env.NODE_ENV === "production",
+          httpOnly: true,
+        })
+        .status(200)
+        .json({ status: authentication.status, data: { ...other } });
     }
   } catch (e) {
     console.error(e);
@@ -31,6 +41,17 @@ const signout = async (req, res) => {
     const user = req.user;
 
     const response = await authenticationService.logout(user, jwtToken);
+
+    [
+      process.env.REFRESH_TOKEN_COOKIE_NAME,
+      process.env.CURRENT_USER_COOKIE_NAME,
+    ].forEach((cookie) =>
+      res.clearCookie(cookie, {
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+      })
+    );
+
     res.status(200).json(response);
   } catch (e) {
     console.error(e);
@@ -40,13 +61,25 @@ const signout = async (req, res) => {
 
 const refreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
     const username = req["username"];
-    const data = await authenticationService.refreshToken({
-      refreshToken,
+    const authentication = await authenticationService.refreshToken({
+      refreshToken: req.cookies["refresh_token"],
       username,
     });
-    res.status(200).json(data);
+
+    //TODO: Handle exisiting refresh token response & new refresh token if expired
+
+    const { refreshToken, ...other } = authentication.data;
+    res
+      .cookie("refresh_token", authentication.data.refreshToken, {
+        expiresIn: new Date(
+          Date.now() + process.env.REFRESH_TOKEN_COOKIE_EXPIRY
+        ),
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+      }) //TODO: Add logged in user in cookie
+      .status(200)
+      .json({ status: authentication.status, data: { ...other } });
   } catch (e) {
     console.error(e);
     res.status(500).json(toError(e));
