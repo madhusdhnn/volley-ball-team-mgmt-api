@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import volleyBallDb from "../config/db";
 import { singleRowExtractor } from "../utils/db-utils";
-import crypto from "crypto";
 import { generateHash } from "../utils/auth-utils";
 class AuthorizationService {
   async deleteInActiveToken(refreshToken) {
@@ -17,7 +16,7 @@ class AuthorizationService {
         return {
           status: "failed",
           code: "AUTH_ERR_401",
-          message: "Auth token is invalid",
+          message: "Auth token is not found in the request",
         };
       }
 
@@ -31,7 +30,7 @@ class AuthorizationService {
         return {
           status: "failed",
           code: "AUTH_ERR_401",
-          message: "Invalid Auth token",
+          message: "Auth token is invalid",
         };
       }
 
@@ -84,7 +83,7 @@ class AuthorizationService {
         return {
           status: "failed",
           code: "AUTH_REFRESH_ERR_401",
-          message: "Unauthorized client",
+          message: "Unrecognized client",
         };
       }
 

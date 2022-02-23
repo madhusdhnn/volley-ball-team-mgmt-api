@@ -1,7 +1,12 @@
 import AuthorizationService from "../services/authorization-service";
 import PlayerService from "../services/player-service";
 import TeamsService from "../services/teams-service";
-import { toError, toPlayer, toTeam } from "../utils/response-utils";
+import {
+  clearCookies,
+  toError,
+  toPlayer,
+  toTeam,
+} from "../utils/response-utils";
 
 const authorizationService = new AuthorizationService();
 const teamService = new TeamsService();
@@ -23,7 +28,7 @@ const authorize = async (jwtToken, roleNames = []) => {
   if (!roleNames.includes(data.user.roleName)) {
     return {
       status: "failed",
-      code: "AUTH_ROLE_401",
+      code: "ACC_ROLE_403",
       message: `You are not authorized to perform this action`,
     };
   }
@@ -42,19 +47,24 @@ const authorizeUser = async (req, res, next, roleNames = []) => {
     if (!jwtToken) {
       res.status(401).json({
         status: "failed",
-        code: "AUTH_401",
-        message: "Auth token not found in header",
+        code: "ACC_401",
+        message: "Auth token not found in the request body/ header",
       });
+      return;
+    }
+
+    const authorization = await authorize(jwtToken, roleNames);
+    if (authorization.status === "failed") {
+      clearCookies(req, res, {
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+      });
+      res.status(401).json(authorization);
     } else {
-      const authorization = await authorize(jwtToken, roleNames);
-      if (authorization.status === "failed") {
-        res.status(401).json(authorization);
-      } else {
-        req.user = authorization.user;
-        req.authentication = authorization.authentication;
-        req.isAdmin = authorization.user.roleName === "ADMIN";
-        next();
-      }
+      req.user = authorization.user;
+      req.authentication = authorization.authentication;
+      req.isAdmin = authorization.user.roleName === "ADMIN";
+      next();
     }
   } catch (e) {
     res.status(500).json(toError(e));
@@ -79,25 +89,26 @@ const sameTeamAuthorize = async (req, res, next) => {
     const teamId = req.params["teamId"];
 
     if (!teamId) {
-      res.status(401).json({
+      res.status(400).json({
         status: "failed",
-        code: "AUTH_TEAM_401",
+        code: "ACC_TEAM_400",
         message: "Team ID not found in the request",
       });
-    } else {
-      const teamInRequest = toTeam(await teamService.getTeam(teamId));
-      const currentPlayer = await getCurrentPlayer(user);
+      return;
+    }
 
-      if (req.isAdmin || currentPlayer.team.id === teamInRequest.teamId) {
-        req.player = currentPlayer;
-        next();
-      } else {
-        res.status(401).json({
-          status: "failed",
-          code: "AUTH_TEAM_401",
-          message: "You are not authorized to perform this action",
-        });
-      }
+    const teamInRequest = toTeam(await teamService.getTeam(teamId));
+    const currentPlayer = await getCurrentPlayer(user);
+
+    if (req.isAdmin || currentPlayer.team.id === teamInRequest.teamId) {
+      req.player = currentPlayer;
+      next();
+    } else {
+      res.status(403).json({
+        status: "failed",
+        code: "ACC_TEAM_403",
+        message: "You are not authorized to perform this action",
+      });
     }
   } catch (e) {
     console.error(e);
@@ -110,6 +121,15 @@ const samePlayerAuthorize = async (req, res, next) => {
     const user = req.user;
     const playerId = req.params["playerId"] || req.body["playerId"];
 
+    if (!playerId) {
+      res.status(400).json({
+        status: "failed",
+        code: "ACC_PLAYER_400",
+        message: "Player ID is not found in the request body/ params",
+      });
+      return;
+    }
+
     const currentPlayer = await getCurrentPlayer(user);
     const playerInRequest = toPlayer(await playerService.getPlayer(playerId));
 
@@ -117,9 +137,9 @@ const samePlayerAuthorize = async (req, res, next) => {
       req.player = currentPlayer;
       next();
     } else {
-      res.status(401).json({
+      res.status(403).json({
         status: "failed",
-        code: "AUTH_PLAYER_401",
+        code: "ACC_PLAYER_403",
         message: "You are not authorized to perform this action",
       });
     }
@@ -134,6 +154,15 @@ const currentPlayerTeamAuthorize = async (req, res, next) => {
     const user = req.user;
     const playerId = req.params["playerId"];
 
+    if (!playerId) {
+      res.status(401).json({
+        status: "failed",
+        code: "ACC_PLAYER_401",
+        message: "Player ID is not found in the request body/ params",
+      });
+      return;
+    }
+
     const currentPlayer = await getCurrentPlayer(user);
     const playerInRequest = toPlayer(await playerService.getPlayer(playerId));
 
@@ -141,9 +170,9 @@ const currentPlayerTeamAuthorize = async (req, res, next) => {
       req.player = currentPlayer;
       next();
     } else {
-      res.status(401).json({
+      res.status(403).json({
         status: "failed",
-        code: "AUTH_PLAYER_401",
+        code: "ACC_PLAYER_403",
         message: "You are not authorized to perform this action",
       });
     }
@@ -159,7 +188,11 @@ const refreshTokenAuthorize = async (req, res, next) => {
       refreshToken
     );
     if (authorization.status === "failed") {
-      res.status(401).json(authorization);
+      clearCookies(req, res, {
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: true,
+      });
+      res.status(403).json(authorization);
     } else {
       req.username = authorization.data;
       next();

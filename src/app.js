@@ -8,6 +8,7 @@ import AuthenticationRouter from "./routes/authentication";
 import TeamRouter from "./routes/teams";
 import PlayerRouter from "./routes/players";
 import ProfileRouter from "./routes/profile";
+import PublicRouter from "./routes/public";
 
 dotenv.config({
   path: path.resolve(
@@ -46,7 +47,7 @@ const createApp = (...routes) => {
 const port = process.env.PORT || 5001;
 const authPort = process.env.AUTH_PORT || 5002;
 
-const app = createApp([TeamRouter, PlayerRouter, ProfileRouter]);
+const app = createApp([TeamRouter, PlayerRouter, ProfileRouter, PublicRouter]);
 
 const authApp = createApp(AuthenticationRouter);
 

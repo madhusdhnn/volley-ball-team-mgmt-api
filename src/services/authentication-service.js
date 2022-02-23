@@ -58,7 +58,7 @@ class AuthenticationService {
       return {
         status: "failed",
         code: "AUTH_401",
-        message: "Username and password does not match",
+        message: "User does not exist",
       };
     }
 
@@ -66,7 +66,7 @@ class AuthenticationService {
       return {
         status: "failed",
         code: "AUTH_401",
-        message: "Password is wrong",
+        message: "Username and password does not match",
       };
     }
 
@@ -101,7 +101,7 @@ class AuthenticationService {
     };
 
     let token = jwt.sign({ user: { ...userTokenData } }, secretKey, {
-      expiresIn: "1h",
+      expiresIn: "10s",
       issuer: "VBMSAuthService",
       subject: userTokenData.username,
     });
@@ -110,7 +110,7 @@ class AuthenticationService {
       { id: generateHash(username), username },
       refreshSecretKey,
       {
-        expiresIn: "3h",
+        expiresIn: "120s",
         issuer: "VBMSAuthService",
         subject: userTokenData.username,
       }

@@ -88,4 +88,9 @@ const toTeam = (team) => {
   return _team;
 };
 
-export { toError, toPlayer, toTeam };
+const clearCookies = (req, res, cookieOptions = {}) => {
+  [process.env.REFRESH_TOKEN_COOKIE_NAME].forEach((cookie) =>
+    res.clearCookie(cookie, cookieOptions)
+  );
+};
+export { toError, toPlayer, toTeam, clearCookies };

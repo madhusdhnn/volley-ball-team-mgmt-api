@@ -1,6 +1,6 @@
 import { Router } from "express";
 import AuthenticationService from "../services/authentication-service";
-import { toError } from "../utils/response-utils";
+import { clearCookies, toError } from "../utils/response-utils";
 import { commonAuthorize, refreshTokenAuthorize } from "./authorization";
 
 const authenticationService = new AuthenticationService();
@@ -42,15 +42,10 @@ const signout = async (req, res) => {
 
     const response = await authenticationService.logout(user, jwtToken);
 
-    [
-      process.env.REFRESH_TOKEN_COOKIE_NAME,
-      process.env.CURRENT_USER_COOKIE_NAME,
-    ].forEach((cookie) =>
-      res.clearCookie(cookie, {
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: true,
-      })
-    );
+    clearCookies(req, res, {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+    });
 
     res.status(200).json(response);
   } catch (e) {
@@ -62,13 +57,11 @@ const signout = async (req, res) => {
 const refreshToken = async (req, res) => {
   try {
     const username = req["username"];
+
     const authentication = await authenticationService.refreshToken({
       refreshToken: req.cookies["refresh_token"],
       username,
     });
-
-    //TODO: Handle exisiting refresh token response & new refresh token if expired
-
     const { refreshToken, ...other } = authentication.data;
     res
       .cookie("refresh_token", authentication.data.refreshToken, {
@@ -77,7 +70,7 @@ const refreshToken = async (req, res) => {
         ),
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
-      }) //TODO: Add logged in user in cookie
+      })
       .status(200)
       .json({ status: authentication.status, data: { ...other } });
   } catch (e) {
