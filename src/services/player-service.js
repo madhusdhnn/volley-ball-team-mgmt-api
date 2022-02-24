@@ -91,7 +91,7 @@ class PlayerService {
                             p.created_at,
                             p.updated_at
                      FROM players p
-                              JOIN teams t ON t.team_id = p.team_id
+                              LEFT JOIN teams t ON t.team_id = p.team_id
                      WHERE p.username = $1`;
 
       const res = await volleyBallDb.query(query, [username]);

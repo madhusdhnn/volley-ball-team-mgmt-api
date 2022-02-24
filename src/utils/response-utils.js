@@ -47,6 +47,8 @@ const toPlayer = (player) => {
 
   const [firstName, lastName] = name.split(" ");
 
+  const hasTeam = !!team_id && !!team_name;
+
   const initials =
     firstName.substring(0, 1) + "" + (lastName ? lastName.substring(0, 1) : "");
 
@@ -55,7 +57,7 @@ const toPlayer = (player) => {
   _player.initials = initials;
   _player.photoUrl = null;
   _player.shirtNo = shirt_no;
-  _player.team = { id: team_id, name: team_name };
+  _player.team = hasTeam ? { id: team_id, name: team_name } : null;
   _player.additionalInfo = {
     age,
     height,
