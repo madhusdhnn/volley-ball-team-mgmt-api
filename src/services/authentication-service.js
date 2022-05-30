@@ -101,7 +101,7 @@ class AuthenticationService {
     };
 
     let token = jwt.sign({ user: { ...userTokenData } }, secretKey, {
-      expiresIn: "10s",
+      expiresIn: process.env.AUTH_TOKEN_EXPIRY,
       issuer: "VBMSAuthService",
       subject: userTokenData.username,
     });
@@ -110,7 +110,7 @@ class AuthenticationService {
       { id: generateHash(username), username },
       refreshSecretKey,
       {
-        expiresIn: "120s",
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
         issuer: "VBMSAuthService",
         subject: userTokenData.username,
       }
